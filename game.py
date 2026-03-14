@@ -1,5 +1,14 @@
 import pygame
 from connect_four import ConnectFour
+from player import LLMPlayer
+
+player_x = LLMPlayer("llama3.2", "X")
+player_o = LLMPlayer("llama3.2", "O")
+
+players = {
+    "X": player_x,
+    "O": player_o
+}
 
 pygame.init()
 
@@ -47,26 +56,38 @@ def draw_board():
             rect_x = offset_x + c * CELL
             rect_y = offset_y + r * CELL
 
+            # Draw board tile
             pygame.draw.rect(
                 screen,
                 BLUE,
                 (rect_x, rect_y, CELL, CELL)
             )
 
-            piece = board.board[r][c]
-
-            color = BLACK
-            if piece == "X":
-                color = RED
-            elif piece == "O":
-                color = YELLOW
-
+            # Draw empty hole
             pygame.draw.circle(
                 screen,
-                color,
+                BLACK,
                 (rect_x + CELL // 2, rect_y + CELL // 2),
                 CELL // 2 - 5
             )
+
+            piece = board.board[r][c]
+
+            if piece == "X":
+                pygame.draw.circle(
+                    screen,
+                    RED,
+                    (rect_x + CELL // 2, rect_y + CELL // 2),
+                    CELL // 2 - 5
+                )
+
+            elif piece == "O":
+                pygame.draw.circle(
+                    screen,
+                    YELLOW,
+                    (rect_x + CELL // 2, rect_y + CELL // 2),
+                    CELL // 2 - 5
+                )
 
 
 def draw_reset_button():
@@ -89,6 +110,7 @@ def draw_winner():
 
 
 running = True
+waiting_for_move = True
 
 while running:
 
@@ -101,28 +123,11 @@ while running:
 
             mouse_pos = event.pos
 
-            # Reset button
             if reset_button.collidepoint(mouse_pos):
                 board.reset()
                 winner = None
                 game_over = False
-            
-            elif not game_over:
-
-                x = mouse_pos[0]
-                col = (x - offset_x) // CELL
-
-                if 0 <= col < board.COLS:
-                    try:
-                        row, col, player, win = board.move(col)
-                        board.print_board()
-
-                        if win:
-                            winner = player
-                            game_over = True
-
-                    except:
-                        pass
+                waiting_for_move = True
 
     screen.fill(BLACK)
 
@@ -132,5 +137,41 @@ while running:
     draw_winner()
 
     pygame.display.update()
+
+    # ----- AI move happens AFTER rendering -----
+
+    if not game_over and waiting_for_move:
+
+        waiting_for_move = False
+
+        current_mark = board.current_player
+        player = players[current_mark]
+
+        print(f"\nPlayer {current_mark}'s turn")
+
+        try:
+            result = player.make_move(board)
+
+            print("LLM response:")
+            print(result)
+
+            move = result["move"]
+
+            row, col, player_mark, win = board.move(move)
+            board.print_board()
+
+            if win:
+                winner = player_mark
+                game_over = True
+
+        except Exception as e:
+            print(f"\nError occurred: {e}")
+
+            winner = "O" if current_mark == "X" else "X"
+            print(f"Player {winner} wins by opponent error.")
+
+            game_over = True
+
+        waiting_for_move = True
 
 pygame.quit()
