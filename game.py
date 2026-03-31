@@ -16,9 +16,9 @@ players = {
 
 pygame.init()
 
-WIDTH = 800
-HEIGHT = 850
-CELL = 100
+WIDTH = 600
+HEIGHT = 750
+CELL = 75
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Connect Four")

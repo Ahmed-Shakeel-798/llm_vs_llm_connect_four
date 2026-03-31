@@ -1,10 +1,13 @@
 from connect_four import ConnectFour
 from player import LLMPlayer
 
+OLLAMA_BASE_URL = "http://localhost:11434/v1"
+API_KEY = "ollama"
+
 board = ConnectFour()
 
-player_x = LLMPlayer("llama3.2", "X")
-player_o = LLMPlayer("llama3.2", "O")
+player_x = LLMPlayer(OLLAMA_BASE_URL, "llama3.2", API_KEY, "X")
+player_o = LLMPlayer(OLLAMA_BASE_URL, "llama3.2", API_KEY, "O")
 
 players = {
     "X": player_x,
