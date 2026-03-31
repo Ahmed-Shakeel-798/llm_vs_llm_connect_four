@@ -39,7 +39,7 @@ BOARD_WIDTH = board.COLS * CELL
 BOARD_HEIGHT = board.ROWS * CELL
 
 offset_x = (WIDTH - BOARD_WIDTH) // 2
-offset_y = (HEIGHT - BOARD_HEIGHT) // 2 + 40
+offset_y = (HEIGHT - BOARD_HEIGHT) // 2
 
 font = pygame.font.SysFont(None, 48)
 small_font = pygame.font.SysFont(None, 36)
@@ -113,6 +113,44 @@ def draw_winner():
         text_rect = text.get_rect(center=popup.center)
 
         screen.blit(text, text_rect)
+    
+
+def draw_ai_thinking():
+    if not ai_thinking:
+        return
+
+    player = board.current_player
+
+    # Text parts
+    text_before = small_font.render("Player ", True, WHITE)
+    text_after = small_font.render(" is thinking...", True, WHITE)
+
+    # Color for X / O
+    if player == "X":
+        color = RED
+    else:
+        color = YELLOW
+
+    text_player = small_font.render(player, True, color)
+
+    # Compute total width
+    total_width = (
+        text_before.get_width()
+        + text_player.get_width()
+        + text_after.get_width()
+    )
+
+    start_x = (WIDTH - total_width) // 2
+    y = HEIGHT - 120
+
+    # Draw sequentially
+    screen.blit(text_before, (start_x, y))
+    screen.blit(text_player, (start_x + text_before.get_width(), y))
+    screen.blit(
+        text_after,
+        (start_x + text_before.get_width() + text_player.get_width(), y)
+    )
+
 
 def compute_move():
     global pending_move, ai_thinking, winner, game_over
@@ -169,6 +207,7 @@ while running:
 
     draw_heading()
     draw_board()
+    draw_ai_thinking()
     draw_reset_button()
     draw_winner()
 
