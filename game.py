@@ -16,6 +16,9 @@ players = {
 
 pygame.init()
 
+clock = pygame.time.Clock()
+FPS = 30
+
 WIDTH = 600
 HEIGHT = 750
 CELL = 75
@@ -193,5 +196,8 @@ while running:
         thread = threading.Thread(target=compute_move)
         thread.daemon = True
         thread.start()
+
+    # FPS limiter
+    clock.tick(FPS)
 
 pygame.quit()
