@@ -19,9 +19,9 @@ pygame.init()
 clock = pygame.time.Clock()
 FPS = 30
 
-WIDTH = 600
-HEIGHT = 750
-CELL = 75
+WIDTH = 950
+HEIGHT = 650
+CELL = 50
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Connect Four")
@@ -35,11 +35,27 @@ GRAY = (200, 200, 200)
 
 board = ConnectFour()
 
-BOARD_WIDTH = board.COLS * CELL
+TOTAL_PARTS = 5
+
+part_width = WIDTH // TOTAL_PARTS
+
+LEFT_WIDTH = part_width - 20
+RIGHT_WIDTH = part_width - 20
+
+BOARD_WIDTH = (part_width * 3) - 20
 BOARD_HEIGHT = board.ROWS * CELL
 
-offset_x = (WIDTH - BOARD_WIDTH) // 2
+offset_x = LEFT_WIDTH + (BOARD_WIDTH - board.COLS * CELL) // 2
 offset_y = (HEIGHT - BOARD_HEIGHT) // 2
+
+LEFT_TEXT_BOX = pygame.Rect(0, offset_y, LEFT_WIDTH, BOARD_HEIGHT)
+RIGHT_TEXT_BOX = pygame.Rect(LEFT_WIDTH + BOARD_WIDTH, offset_y, RIGHT_WIDTH, BOARD_HEIGHT)
+
+lines_X = ["Player X Logs", "----------------"]
+lines_O = ["Player O Logs", "----------------"]
+
+scroll_X = 0
+scroll_O = 0
 
 font = pygame.font.SysFont(None, 48)
 small_font = pygame.font.SysFont(None, 36)
@@ -177,6 +193,64 @@ def compute_move():
         ai_thinking = False
 
 
+TEXT_BOX = pygame.Rect(50, 750, 500, 80) # x, y, width, height
+
+lines = []
+scroll_offset = 0
+log_font = pygame.font.SysFont(None, 22)
+line_height = 18
+
+def wrap_text(text, font, max_width):
+    words = text.split(" ")
+    lines = []
+    current = ""
+
+    for word in words:
+        test_line = current + (" " if current else "") + word
+        width, _ = font.size(test_line)
+
+        if width <= max_width:
+            current = test_line
+        else:
+            lines.append(current)
+            current = word
+
+    if current:
+        lines.append(current)
+
+    return lines
+
+def add_text(player, text):
+    if player == "X":
+        wrapped = wrap_text(text, log_font, LEFT_TEXT_BOX.width - 10)
+        lines_X.extend(wrapped)
+    else:
+        wrapped = wrap_text(text, log_font, RIGHT_TEXT_BOX.width - 10)
+        lines_O.extend(wrapped)
+
+def draw_text_box(rect, lines, scroll):
+    pygame.draw.rect(screen, GRAY, rect)
+    pygame.draw.rect(screen, WHITE, rect, 2)
+
+    clip = screen.get_clip()
+    screen.set_clip(rect)
+
+    y = rect.y - scroll
+
+    for i, line in enumerate(lines):
+
+        # Header styling (first line)
+        if i == 0:
+            text_surface = log_font.render(line, True, WHITE)
+        else:
+            text_surface = log_font.render(line, True, BLACK)
+
+        screen.blit(text_surface, (rect.x + 5, y))
+        y += line_height
+
+    screen.set_clip(clip)
+
+
 waiting_for_move = True
 
 ai_thinking = False
@@ -188,6 +262,24 @@ running = True
 while running:
 
     for event in pygame.event.get():
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+
+            mouse_pos = pygame.mouse.get_pos()
+
+            if LEFT_TEXT_BOX.collidepoint(mouse_pos):
+                if event.button == 4:
+                    scroll_X = max(0, scroll_X - 20)
+                elif event.button == 5:
+                    max_scroll = max(0, len(lines_X) * line_height - LEFT_TEXT_BOX.height)
+                    scroll_X = min(max_scroll, scroll_X + 20)
+
+            elif RIGHT_TEXT_BOX.collidepoint(mouse_pos):
+                if event.button == 4:
+                    scroll_O = max(0, scroll_O - 20)
+                elif event.button == 5:
+                    max_scroll = max(0, len(lines_O) * line_height - RIGHT_TEXT_BOX.height)
+                    scroll_O = min(max_scroll, scroll_O + 20)
 
         if event.type == pygame.QUIT:
             running = False
@@ -210,6 +302,8 @@ while running:
     draw_ai_thinking()
     draw_reset_button()
     draw_winner()
+    draw_text_box(LEFT_TEXT_BOX, lines_X, scroll_X)
+    draw_text_box(RIGHT_TEXT_BOX, lines_O, scroll_O)
 
     pygame.display.update()
 
@@ -219,6 +313,7 @@ while running:
             move = pending_move
             pending_move = None
 
+        add_text(board.current_player, f"plays column {move}")
         row, col, player_mark, win = board.move(move)
         board.print_board()
 
