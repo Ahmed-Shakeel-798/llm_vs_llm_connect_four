@@ -9,19 +9,35 @@ API_KEY = "ollama"
 player_x = LLMPlayer(OLLAMA_BASE_URL, "llama3.2", API_KEY, "X")
 player_o = LLMPlayer(OLLAMA_BASE_URL, "llama3.2", API_KEY, "O")
 
+board = ConnectFour()
+
 players = {
     "X": player_x,
     "O": player_o
 }
 
+FPS = 30
+
+WIDTH = 1000
+HEIGHT = 650
+CELL = 70
+
+TOTAL_PARTS = 4
+
+part_width = WIDTH // TOTAL_PARTS
+
+LEFT_WIDTH = part_width - 10
+RIGHT_WIDTH = part_width - 10
+
+BOARD_WIDTH = (part_width * 2) # 600
+BOARD_HEIGHT = board.ROWS * CELL
+
+offset_x = LEFT_WIDTH + 10 + ( (BOARD_WIDTH - board.COLS * CELL) // 2) 
+offset_y = 100
+
 pygame.init()
 
 clock = pygame.time.Clock()
-FPS = 30
-
-WIDTH = 950
-HEIGHT = 650
-CELL = 50
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Connect Four")
@@ -33,23 +49,8 @@ YELLOW = (255, 255, 0)
 WHITE = (255, 255, 255)
 GRAY = (200, 200, 200)
 
-board = ConnectFour()
-
-TOTAL_PARTS = 5
-
-part_width = WIDTH // TOTAL_PARTS
-
-LEFT_WIDTH = part_width - 20
-RIGHT_WIDTH = part_width - 20
-
-BOARD_WIDTH = (part_width * 3) - 20
-BOARD_HEIGHT = board.ROWS * CELL
-
-offset_x = LEFT_WIDTH + (BOARD_WIDTH - board.COLS * CELL) // 2
-offset_y = (HEIGHT - BOARD_HEIGHT) // 2
-
-LEFT_TEXT_BOX = pygame.Rect(0, offset_y, LEFT_WIDTH, BOARD_HEIGHT)
-RIGHT_TEXT_BOX = pygame.Rect(LEFT_WIDTH + BOARD_WIDTH, offset_y, RIGHT_WIDTH, BOARD_HEIGHT)
+LEFT_TEXT_BOX = pygame.Rect(5, offset_y, LEFT_WIDTH, BOARD_HEIGHT)
+RIGHT_TEXT_BOX = pygame.Rect(5 + LEFT_WIDTH + 5 + BOARD_WIDTH + 5, offset_y, RIGHT_WIDTH, BOARD_HEIGHT)
 
 lines_X = ["Player X Logs", "----------------"]
 lines_O = ["Player O Logs", "----------------"]
@@ -129,7 +130,9 @@ def draw_winner():
         text_rect = text.get_rect(center=popup.center)
 
         screen.blit(text, text_rect)
-    
+        
+
+aiThinkingMessageFont = pygame.font.SysFont(None, 28)
 
 def draw_ai_thinking():
     if not ai_thinking:
@@ -138,8 +141,8 @@ def draw_ai_thinking():
     player = board.current_player
 
     # Text parts
-    text_before = small_font.render("Player ", True, WHITE)
-    text_after = small_font.render(" is thinking...", True, WHITE)
+    text_before = aiThinkingMessageFont.render("Player ", True, WHITE)
+    text_after = aiThinkingMessageFont.render(" is thinking...", True, WHITE)
 
     # Color for X / O
     if player == "X":
@@ -147,7 +150,7 @@ def draw_ai_thinking():
     else:
         color = YELLOW
 
-    text_player = small_font.render(player, True, color)
+    text_player = aiThinkingMessageFont.render(player, True, color)
 
     # Compute total width
     total_width = (
